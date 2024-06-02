@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paddleboarder</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #87CEEB;
+    }
+    #game {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+    }
+    #paddleboard {
+        width: 60px;
+        height: 20px;
+        background-color: #2E8B57;
+        position: absolute;
+        bottom: 20px;
+        left: calc(50% - 30px);
+    }
+    .obstacle {
+        width: 30px;
+        height: 30px;
+        background-color: #FF0000;
+        position: absolute;
+        bottom: 100%;
+    }
+</style>
+</head>
+<body>
+<div id="game">
+    <div id="paddleboard"></div>
+</div>
+
+<script>
+    const game = document.getElementById('game');
+    const paddleboard = document.getElementById('paddleboard');
+
+    let paddleboardX = 50; // Initial position
+    let paddleboardSpeed = 5;
+
+    let obstacles = [];
+    let obstacleSpeed = 3;
+    let obstacleSpawnRate = 1500; // milliseconds
+
+    let lastSpawn = -1;
+
+    function updatePaddleboard() {
+        paddleboard.style.left = paddleboardX + '%';
+    }
+
+    function updateObstacles() {
+        const currentTime = Date.now();
+        if (currentTime - lastSpawn > obstacleSpawnRate) {
+            lastSpawn = currentTime;
+            createObstacle();
+        }
+
+        obstacles.forEach((obstacle, index) => {
+            obstacle.style.bottom = parseInt(obstacle.style.bottom) - obstacleSpeed + 'px';
+            if (parseInt(obstacle.style.bottom) < 0) {
+                obstacle.parentNode.removeChild(obstacle);
+                obstacles.splice(index, 1);
+            }
+            if (checkCollision(obstacle)) {
+                gameOver();
+            }
+        });
+    }
+
+    function createObstacle() {
+        const obstacle = document.createElement('div');
+        obstacle.className = 'obstacle';
+        obstacle.style.left = Math.random() * (100 - 30) + '%';
+        game.appendChild(obstacle);
+        obstacles.push(obstacle);
+    }
+
+    function checkCollision(obstacle) {
+        const paddleboardRect = paddleboard.getBoundingClientRect();
+        const obstacleRect = obstacle.getBoundingClientRect();
+
+        return (
+            paddleboardRect.bottom > obstacleRect.top &&
+            paddleboardRect.top < obstacleRect.bottom &&
+            paddleboardRect.right > obstacleRect.left &&
+            paddleboardRect.left < obstacleRect.right
+        );
+    }
+
+    function gameOver() {
+        alert('Game Over!');
+        location.reload();
+    }
+
+    function update() {
+        updatePaddleboard();
+        updateObstacles();
+        requestAnimationFrame(update);
+    }
+
+    update();
+
+    function handleTouchStart(event) {
+        event.preventDefault();
+        const touch = event.touches[0];
+        if (touch.clientX < window.innerWidth / 2) {
+            paddleboardSpeed = -5;
+        } else {
+            paddleboardSpeed = 5;
+        }
+    }
+
+    function handleTouchEnd(event) {
+        event.preventDefault();
+        paddleboardSpeed = 0;
+    }
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    function movePaddleboard() {
+        paddleboardX += paddleboardSpeed;
+        if (paddleboardX < 0) {
+            paddleboardX = 0;
+        } else if (paddleboardX > 100) {
+            paddleboardX = 100;
+        }
+    }
+
+    setInterval(movePaddleboard, 30); // Adjust the interval as needed
+</script>
+</body>
+</html>
